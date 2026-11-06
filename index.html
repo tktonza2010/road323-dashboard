@@ -88,10 +88,10 @@ window.__DATA = {"scurve": [{"month": "2026-08", "label": "ส.ค. 69", "period
   .p3 .msum b { font-family: var(--font-anthropic-serif), serif; font-weight: 400; font-size: var(--cds-font-size-heading); font-variant-numeric: tabular-nums; }
   .p3 .mlist { display: flex; flex-direction: column; gap: var(--cds-gap-md); min-height: 120px; }
   .p3 .mgrp h3 { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-weight: 600; margin: 0 0 var(--cds-gap-xs); letter-spacing: 0.02em; }
-  .p3 .mrow { display: grid; grid-template-columns: 4.2rem 1fr auto; gap: var(--cds-gap-sm); padding: var(--cds-pad-xs) 0; border-bottom: 1px solid var(--color-border-line); font-size: var(--cds-font-size-caption); align-items: start; }
+  .p3 .mrow { display: grid; grid-template-columns: 4.2rem 1fr; gap: var(--cds-gap-sm); padding: var(--cds-pad-xs) 0; border-bottom: 1px solid var(--color-border-line); font-size: var(--cds-font-size-caption); align-items: start; }
   .p3 .mrow .w { color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
   .p3 .mrow .nm { min-width: 0; overflow-wrap: anywhere; }
-  .p3 .mrow .amt { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem; }
+  .p3 .mrow .amt { grid-column: 2; font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
   .p3 .mrow .amt .sm { color: var(--color-fg-muted); }
   .p3 [hidden] { display: none !important; }
   .p3 [data-dash-source-state=empty] { color: transparent; }
@@ -138,7 +138,13 @@ window.__DATA = {"scurve": [{"month": "2026-08", "label": "ส.ค. 69", "period
       <h2>งานในแต่ละเดือน</h2>
       <select class="msel" data-draw="month-select" data-source="scurve" aria-label="เลือกเดือน"></select>
     </div>
-    <p class="note">รายการงานตามแผนของเดือนที่เลือก เทียบกับที่ทำได้จริงในงวดนั้น (ตัดยอดวันที่ 25) แตะจุดบนกราฟ S-Curve เพื่อเลือกเดือนได้ด้วย</p>
+    <p class="note">% คิดเทียบค่างานทั้งโครงการ 928.43 ล้านบาท (แผนตาม Progress Chart) · รายการงานตามแผนของเดือนที่เลือก เทียบกับที่ทำได้จริงในงวดนั้น (ตัดยอดวันที่ 25) แตะจุดบนกราฟ S-Curve เพื่อเลือกเดือนได้ด้วย</p>
+    <div class="msum mpct">
+      <div><span class="k">แผน % เดือนนี้</span><b data-draw="mp-plan" data-source="scurve" data-field="plan_month_pct">—</b><span class="k">% ของโครงการ</span></div>
+      <div><span class="k">ทำได้ % เดือนนี้</span><b data-draw="mp-act" data-source="scurve" data-field="actual_month_pct">—</b><span class="k">% ของโครงการ</span></div>
+      <div><span class="k">แผนสะสม ถึงเดือนนี้</span><b data-draw="mp-pcum" data-source="scurve" data-field="plan_cum_pct">—</b><span class="k">%</span></div>
+      <div><span class="k">ผลงานสะสม ถึงเดือนนี้</span><b data-draw="mp-acum" data-source="scurve" data-field="actual_cum_pct">—</b><span class="k">%</span></div>
+    </div>
     <div class="msum">
       <div><span class="k">แผนเดือนนี้</span><b data-draw="m-plan" data-source="month_sum" data-field="plan_mb">—</b><span class="k">ล้านบาท</span></div>
       <div><span class="k">ทำได้จริง</span><b data-draw="m-act" data-source="month_sum" data-field="actual_mb">—</b><span class="k">ล้านบาท</span></div>
@@ -423,7 +429,7 @@ window.__DATA = {"scurve": [{"month": "2026-08", "label": "ส.ค. 69", "period
   const curMonth = () => window.p3.month || pickDefaultMonth();
   window.p3.setMonth = (m) => {
     window.p3.month = m;
-    ['month-select', 'month-list', 'm-plan', 'm-act', 'm-n'].forEach((n) => dash.draw(n));
+    ['month-select', 'month-list', 'm-plan', 'm-act', 'm-n', 'mp-plan', 'mp-act', 'mp-pcum', 'mp-acum'].forEach((n) => dash.draw(n));
   };
 
   dash.draw('month-select', (sel) => {
@@ -440,6 +446,23 @@ window.__DATA = {"scurve": [{"month": "2026-08", "label": "ส.ค. 69", "period
     const r = d.status === 'ok' ? d.data.find((x) => x.month === m) : null;
     el.textContent = r && r[field] != null ? fmt(r[field]) : '—';
   };
+  const pctCell = (field) => (el) => {
+    const d = dash.data('scurve');
+    const m = curMonth();
+    el.dataset.where = 'month=' + encodeURIComponent(m || '');
+    el.classList.remove('neg', 'pos');
+    const r = d.status === 'ok' ? d.data.find((x) => x.month === m) : null;
+    const v = r ? r[field] : '';
+    el.textContent = v === '' || v == null ? 'ยังไม่รายงาน' : d3.format('.3f')(Number(v)) + '%';
+    if (r && field.startsWith('actual') && v !== '' && v != null) {
+      const plan = Number(r[field.replace('actual', 'plan')]);
+      el.classList.add(Number(v) < plan ? 'neg' : 'pos');
+    }
+  };
+  dash.draw('mp-plan', pctCell('plan_month_pct'));
+  dash.draw('mp-act', pctCell('actual_month_pct'));
+  dash.draw('mp-pcum', pctCell('plan_cum_pct'));
+  dash.draw('mp-acum', pctCell('actual_cum_pct'));
   dash.draw('m-plan', sumCell('plan_mb', d3.format(',.3f')));
   dash.draw('m-act', sumCell('actual_mb', d3.format(',.3f')));
   dash.draw('m-n', sumCell('n_plan', d3.format(',')));
@@ -463,14 +486,14 @@ window.__DATA = {"scurve": [{"month": "2026-08", "label": "ส.ค. 69", "period
         const w = document.createElement('div'); w.className = 'w'; w.textContent = r.wbs;
         const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = r.item;
         const amt = document.createElement('div'); amt.className = 'amt';
-        const p = document.createElement('div'); p.textContent = 'แผน ' + fb(Number(r.plan_baht));
+        const p = document.createElement('div'); p.textContent = 'แผน ' + fb(Number(r.plan_baht)) + ' (' + d3.format('.4f')(Number(r.plan_baht) / 928432441 * 100) + '%)';
         amt.append(p);
         if (reported) {
           const a = Number(r.actual_baht || 0), pl = Number(r.plan_baht);
           const chip = document.createElement('span');
           const ok = a >= pl - 0.5;
           chip.className = 'chip ' + (ok ? 'chip-ok' : 'chip-bad');
-          chip.textContent = a === 0 ? 'ยังไม่ทำ' : 'ทำได้ ' + fb(a);
+          chip.textContent = a === 0 ? 'ยังไม่ทำ' : 'ทำได้ ' + fb(a) + ' (' + d3.format('.4f')(a / 928432441 * 100) + '%)';
           amt.append(chip);
         } else {
           const s = document.createElement('div'); s.className = 'sm'; s.textContent = 'ยังไม่ถึงงวด'; amt.append(s);
