@@ -162,7 +162,7 @@ window.__DATA = {"scurve": [{"month": "2026-08", "label": "ส.ค. 69", "period
     <div class="tile"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span><span class="k">ผลงานสะสม</span><span class="v" data-draw="k-act" data-source="latest" data-field="actual_cum">—</span><span class="n">% ของค่างาน 928.43 ล้านบาท</span></div>
     <div class="tile"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><span class="k">แผนงานสะสม</span><span class="v" data-draw="k-plan" data-source="latest" data-field="plan_cum">—</span><span class="n">% ตาม Progress Chart</span></div>
     <div class="tile"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="k">เร็ว/ช้า กว่าแผน</span><span class="v" data-draw="k-var" data-source="latest" data-field="variance">—</span><span class="n">จุดเปอร์เซ็นต์</span></div>
-    <div class="tile"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span><span class="k">ระยะเวลาผ่านไป</span><span class="v" data-draw="k-time" data-source="latest" data-field="elapsed_pct">—</span><span class="n">วันที่ <span data-draw="k-day" data-source="latest" data-field="day">—</span> จาก 1,080 วัน</span></div>
+    <div class="tile"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span><span class="k">ระยะเวลาผ่านไป (ถึงวันนี้)</span><span class="v" data-draw="k-time" data-source="latest" data-field="elapsed_pct">—</span><span class="n">วันที่ <span data-draw="k-day" data-source="latest" data-field="day">—</span></span></div>
     <div class="tile"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M17 7H9.5a3 3 0 000 6h5a3 3 0 010 6H6"/></svg></span><span class="k">มูลค่างานสะสม</span><span class="v" data-draw="k-baht" data-source="latest" data-field="actual_mb">—</span><span class="n">ล้านบาท</span></div>
   </section>
 
@@ -583,6 +583,10 @@ window.__DATA = {"scurve": [{"month": "2026-08", "label": "ส.ค. 69", "period
     if (d.status !== 'ok' || !d.data.length) { el.textContent = '—'; return; }
     const v = d.data[0][field]; el.textContent = f(v); if (cls) el.classList.add(v < 0 ? 'neg' : 'pos');
   };
+  const START = new Date(2026, 7, 11), DAYS = 1080;
+  const todayDay = () => { const n = new Date(); const t = new Date(n.getFullYear(), n.getMonth(), n.getDate()); return Math.min(DAYS, Math.max(0, Math.round((t - START) / 864e5) + 1)); };
+  dash.draw('k-time', (el) => { el.textContent = d3.format('.1f')(todayDay() / DAYS * 100) + '%'; });
+  dash.draw('k-day', (el) => { const d = todayDay(); el.textContent = d3.format(',')(d) + ' จาก 1,080 วัน · เหลือ ' + d3.format(',')(DAYS - d); });
   dash.draw('g-plan', oneL('plan_cum', fmt3));
   dash.draw('g-act', oneL('actual_cum', fmt3));
   dash.draw('g-var', oneL('variance', (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + d3.format('.3f')(Math.abs(v)) + '%', true));
